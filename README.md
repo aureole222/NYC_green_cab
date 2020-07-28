@@ -7,6 +7,7 @@ NYC green cab tips prediction and example on how to working with 1million entrie
 
 In this project, I demonstrated how to process the raw data from the NYC Cab website as well as cleaning the locational data.
 Then I predict the taxi tips amount used a combination of random forest and ANN and achieved amazing results.
+
 ![prediction result](/ipython_notebook_pictures/result.png)
 
 And I shows the code in the notebook about how to create an interactive dashboard using dash package on this dataset with 1million entries.
