@@ -210,4 +210,183 @@ plt.tight_layout()
 plt.show()
 
 
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from scipy.stats import percentileofscore
+
+# =========================
+# CONFIG
+# =========================
+COLS = ["Val1", "Val2", "Val3", "Val4"]
+ROLLING_DAYS = 252          # 1Y rolling window
+TRAIL_LENGTH = 20           # days for fade-in/out
+PCTS = [10, 25, 50, 75, 90]
+
+df = df.sort_index()
+
+# =========================
+# PRECOMPUTE ROLLING STATS
+# =========================
+rolling_values = {
+    c: df[c].rolling(ROLLING_DAYS, min_periods=ROLLING_DAYS)
+    for c in COLS
+}
+
+# =========================
+# BUILD ANIMATION FRAMES
+# =========================
+frames = []
+x_pos = list(range(len(COLS)))
+valid_dates = df.index[ROLLING_DAYS - 1 :]
+
+for t_idx, date in enumerate(valid_dates):
+    frame_data = []
+
+    for i, c in enumerate(COLS):
+        window = rolling_values[c].get_window(date)
+        values = window.dropna()
+
+        p10, p25, p50, p75, p90 = np.percentile(values, PCTS)
+        val = df.loc[date, c]
+
+        # Percentile rank
+        rank = percentileofscore(values, val)
+
+        # Color logic
+        color = "green" if val >= p50 else "red"
+
+        # --- BOX (25–75)
+        frame_data.append(go.Scatter(
+            x=[i, i, i, i, i],
+            y=[p25, p75, p75, p25, p25],
+            fill="toself",
+            fillcolor="rgba(70,130,180,0.35)",
+            line=dict(color="rgba(70,130,180,1)"),
+            hoverinfo="skip",
+            showlegend=False
+        ))
+
+        # --- MEDIAN
+        frame_data.append(go.Scatter(
+            x=[i - 0.25, i + 0.25],
+            y=[p50, p50],
+            mode="lines",
+            line=dict(color="black", width=2),
+            showlegend=False
+        ))
+
+        # --- WHISKERS (10–90)
+        frame_data.append(go.Scatter(
+            x=[i, i],
+            y=[p10, p90],
+            mode="lines",
+            line=dict(color="black"),
+            showlegend=False
+        ))
+
+        # --- FADE TRAIL
+        trail_dates = valid_dates[max(0, t_idx - TRAIL_LENGTH) : t_idx]
+        trail_vals = df.loc[trail_dates, c]
+
+        alphas = np.linspace(0.1, 0.6, len(trail_vals))
+
+        frame_data.append(go.Scatter(
+            x=[i] * len(trail_vals),
+            y=trail_vals,
+            mode="markers",
+            marker=dict(
+                size=6,
+                color=[f"rgba(128,128,128,{a})" for a in alphas]
+            ),
+            hoverinfo="skip",
+            showlegend=False
+        ))
+
+        # --- CURRENT VALUE
+        frame_data.append(go.Scatter(
+            x=[i],
+            y=[val],
+            mode="markers+text",
+            marker=dict(
+                size=13,
+                color=color,
+                symbol="diamond"
+            ),
+            text=[f"{rank:.0f}th %"],
+            textposition="top center",
+            name="Value" if i == 0 else None,
+            hovertemplate=(
+                f"<b>{c}</b><br>"
+                "Value: %{y:.2f}<br>"
+                f"Rank: {rank:.1f}th pct<br>"
+                f"Median: {p50:.2f}<extra></extra>"
+            )
+        ))
+
+    frames.append(go.Frame(name=str(date.date()), data=frame_data))
+
+# =========================
+# INITIAL FIGURE
+# =========================
+fig = go.Figure(
+    data=frames[0].data,
+    frames=frames
+)
+
+# =========================
+# LAYOUT + CONTROLS
+# =========================
+fig.update_layout(
+    title="Rolling 1Y Percentile Box (Animated with Rank & Fade)",
+    xaxis=dict(
+        tickmode="array",
+        tickvals=x_pos,
+        ticktext=COLS
+    ),
+    yaxis_title="Value",
+    template="plotly_white",
+    hovermode="closest",
+
+    updatemenus=[{
+        "type": "buttons",
+        "showactive": False,
+        "buttons": [
+            {
+                "label": "▶ Play",
+                "method": "animate",
+                "args": [
+                    None,
+                    {
+                        "frame": {"duration": 120, "redraw": True},
+                        "fromcurrent": True
+                    }
+                ]
+            },
+            {
+                "label": "⏸ Pause",
+                "method": "animate",
+                "args": [
+                    [None],
+                    {"frame": {"duration": 0}, "mode": "immediate"}
+                ]
+            }
+        ]
+    }],
+
+    sliders=[{
+        "steps": [
+            {
+                "method": "animate",
+                "args": [[f.name], {"mode": "immediate"}],
+                "label": f.name
+            }
+            for f in frames
+        ],
+        "currentvalue": {"prefix": "Date: "}
+    }]
+)
+
+fig.show()
+
 
