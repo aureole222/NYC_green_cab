@@ -39,3 +39,175 @@ ax.grid(axis="y", alpha=0.3)
 
 plt.tight_layout()
 plt.show()
+
+
+
+import pandas as pd
+
+window = 252  # ~1Y trading days
+
+roll_p10 = df["Val1"].rolling(window).quantile(0.10)
+roll_p25 = df["Val1"].rolling(window).quantile(0.25)
+roll_p50 = df["Val1"].rolling(window).quantile(0.50)
+roll_p75 = df["Val1"].rolling(window).quantile(0.75)
+roll_p90 = df["Val1"].rolling(window).quantile(0.90)
+
+import plotly.graph_objects as go
+
+fig = go.Figure()
+
+# --- Val1 historical line ---
+fig.add_trace(
+    go.Scatter(
+        x=df.index,
+        y=df["Val1"],
+        mode="lines",
+        name="Val1",
+        line=dict(width=2),
+        hovertemplate="Date: %{x}<br>Val1: %{y:.4f}<extra></extra>",
+    )
+)
+
+# --- 10–90 percentile band ---
+fig.add_trace(
+    go.Scatter(
+        x=df.index,
+        y=roll_p10,
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo="skip",
+    )
+)
+
+fig.add_trace(
+    go.Scatter(
+        x=df.index,
+        y=roll_p90,
+        fill="tonexty",
+        name="10–90% (1Y rolling)",
+        fillcolor="rgba(0, 100, 200, 0.15)",
+        line=dict(width=0),
+        hoverinfo="skip",
+    )
+)
+
+# --- 25–75 percentile band ---
+fig.add_trace(
+    go.Scatter(
+        x=df.index,
+        y=roll_p25,
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo="skip",
+    )
+)
+
+fig.add_trace(
+    go.Scatter(
+        x=df.index,
+        y=roll_p75,
+        fill="tonexty",
+        name="25–75% (1Y rolling)",
+        fillcolor="rgba(0, 100, 200, 0.30)",
+        line=dict(width=0),
+        hoverinfo="skip",
+    )
+)
+
+# --- Rolling median ---
+fig.add_trace(
+    go.Scatter(
+        x=df.index,
+        y=roll_p50,
+        mode="lines",
+        name="Rolling Median (50%)",
+        line=dict(dash="dash", width=2),
+        hovertemplate="Date: %{x}<br>Median: %{y:.4f}<extra></extra>",
+    )
+)
+
+fig.update_layout(
+    title="Val1 with 1Y Rolling Percentile Bands",
+    yaxis_title="Value",
+    hovermode="x unified",
+
+    xaxis=dict(
+        showgrid=True,
+        gridcolor="lightgrey",
+        gridwidth=0.5,
+        tickformat="%Y-%m",
+        dtick="M1",              # one grid per month
+        ticklabelmode="period",
+        rangeslider=dict(visible=True),
+    ),
+
+    yaxis=dict(
+        showgrid=True,
+        gridcolor="rgba(200,200,200,0.4)",
+    ),
+
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1,
+    ),
+
+    template="plotly_white",
+    height=600,
+)
+
+fig.show()
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+window = 252  # ~1 year trading days
+
+roll_p10 = df["Val1"].rolling(window).quantile(0.10)
+roll_p25 = df["Val1"].rolling(window).quantile(0.25)
+roll_p50 = df["Val1"].rolling(window).quantile(0.50)
+roll_p75 = df["Val1"].rolling(window).quantile(0.75)
+roll_p90 = df["Val1"].rolling(window).quantile(0.90)
+
+
+fig, ax = plt.subplots(figsize=(12, 6))
+
+# Main series
+ax.plot(df.index, df["Val1"], label="Val1", linewidth=1.5)
+
+# Shaded percentile bands
+ax.fill_between(df.index, roll_p10, roll_p90, alpha=0.15, label="10–90% range")
+ax.fill_between(df.index, roll_p25, roll_p75, alpha=0.25, label="25–75% range")
+
+# Median
+ax.plot(df.index, roll_p50, linestyle="--", linewidth=1.5, label="Rolling Median (50%)")
+
+# Formatting
+ax.set_title("Val1 with 1Y Rolling Percentile Bands")
+ax.set_ylabel("Value")
+ax.legend()
+
+
+# Set monthly ticks
+months = pd.date_range(
+    start=df.index.min().normalize(),
+    end=df.index.max().normalize(),
+    freq="MS"
+)
+
+ax.set_xticks(months)
+
+# Light grey vertical gridlines
+ax.grid(axis="x", color="lightgrey", linestyle="-", linewidth=0.5, alpha=0.6)
+ax.grid(axis="y", alpha=0.3)
+
+# Improve label readability
+fig.autofmt_xdate()
+
+plt.tight_layout()
+plt.show()
+
+
+
