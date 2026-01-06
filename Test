@@ -1,0 +1,29 @@
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(8, 5))
+
+box_data = []
+for c in cols:
+    p10, p25, p50, p75, p90 = stats[c]
+    box_data.append({
+        "label": c,
+        "whislo": p10,   # 10th percentile
+        "q1": p25,       # 25th
+        "med": p50,      # 50th (median)
+        "q3": p75,       # 75th
+        "whishi": p90,   # 90th percentile
+        "fliers": []
+    })
+
+ax.bxp(box_data, showfliers=False)
+
+# Plot latest values
+x = range(1, len(cols) + 1)
+ax.scatter(x, latest[cols], zorder=3, marker="D", label="Latest")
+
+ax.set_title("Distribution with Percentiles & Latest Value")
+ax.legend()
+ax.grid(axis="y", alpha=0.3)
+
+plt.tight_layout()
+plt.show()
