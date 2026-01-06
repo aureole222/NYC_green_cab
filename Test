@@ -1,3 +1,29 @@
+from datetime import date
+
+def split_by_year(start_date: date, end_date: date):
+    """
+    Split [start_date, end_date] into year-bounded intervals.
+    First interval starts at start_date.
+    Last interval ends at end_date.
+    All middle intervals align to full calendar years.
+    """
+    if start_date > end_date:
+        raise ValueError("start_date must be <= end_date")
+
+    intervals = []
+
+    current_start = start_date
+
+    while current_start.year < end_date.year:
+        year_end = date(current_start.year, 12, 31)
+        intervals.append((current_start, year_end))
+        current_start = date(current_start.year + 1, 1, 1)
+
+    # final interval
+    intervals.append((current_start, end_date))
+
+    return intervals
+
 import numpy as np
 
 cols = ["Val1", "Val2", "Val3", "Val4"]
