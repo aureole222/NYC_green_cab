@@ -1,3 +1,15 @@
+import numpy as np
+
+cols = ["Val1", "Val2", "Val3", "Val4"]
+
+percentiles = [10, 25, 50, 75, 90]
+
+stats = {}
+latest = df.iloc[-1]
+
+for c in cols:
+    stats[c] = np.percentile(df[c].dropna(), percentiles)
+
 import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(8, 5))
