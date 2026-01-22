@@ -1,3 +1,81 @@
+import pandas as pd
+
+# -----------------------------
+# Sample DataFrame
+# -----------------------------
+df = pd.DataFrame({
+    "ID": [1, 2, 3, 4],
+    "Name": ["Alpha", "Beta", "Gamma", "Delta"],
+    "Value": [10.5, 23.1, 7.8, 15.2],
+    "Matched": ["yes", "no", "yes", "no"]
+})
+
+# -----------------------------
+# Row-level conditional styling
+# -----------------------------
+def highlight_unmatched(row):
+    """
+    If Matched == 'no', color entire row text red
+    """
+    if str(row["Matched"]).lower() == "no":
+        return ["color: #b00020; font-weight: 600"] * len(row)
+    return [""] * len(row)
+
+# -----------------------------
+# Build Styler
+# -----------------------------
+styler = (
+    df.style
+    # Alternate row colours
+    .set_properties(**{
+        "white-space": "nowrap",
+        "text-align": "left",
+        "padding": "6px 10px",
+        "border": "1px solid #ddd"
+    })
+    .set_table_styles([
+        # Header
+        {
+            "selector": "th",
+            "props": [
+                ("background-color", "#f2f2f2"),
+                ("font-weight", "600"),
+                ("text-align", "left"),
+                ("border", "1px solid #ddd"),
+                ("padding", "6px 10px")
+            ]
+        },
+        # Alternate rows
+        {
+            "selector": "tbody tr:nth-child(even)",
+            "props": [("background-color", "#fafafa")]
+        },
+        {
+            "selector": "tbody tr:nth-child(odd)",
+            "props": [("background-color", "#ffffff")]
+        },
+        # Auto-fit columns
+        {
+            "selector": "table",
+            "props": [
+                ("border-collapse", "collapse"),
+                ("width", "auto"),
+                ("table-layout", "auto")
+            ]
+        }
+    ])
+    # Row-level conditional font coloring
+    .apply(highlight_unmatched, axis=1)
+)
+
+# -----------------------------
+# Export to HTML
+# -----------------------------
+html = styler.to_html()
+
+with open("styled_table.html", "w", encoding="utf-8") as f:
+    f.write(html)
+
 from datetime import date, timedelta
 
 def quarter_start(d: date) -> date:
